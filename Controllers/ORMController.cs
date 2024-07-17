@@ -19,9 +19,29 @@ namespace SQL.Controllers
                 using (var context = new AppDbContext())
                 {
                     var employees = await context.employees.ToListAsync();
-                    stopwatch.Stop();
-                    return Ok(stopwatch.ElapsedMilliseconds);
                 }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("Get Employee By Name & Surname")]
+        public async Task<IActionResult> GetEmployeeByName(string name)
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var context = new AppDbContext())
+                {
+                    var employee = await context.employees.FirstOrDefaultAsync(e => e.name == name);
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
             }
             catch (Exception ex)
             {

@@ -40,6 +40,48 @@ namespace SQL.Controllers
             }
         }
 
+        [HttpGet("Get Employee By Name & Surname")]
+        public IActionResult GetEmployeeByName(string name)
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string getEmployeeByNameQuery = $@"SELECT * FROM employees WHERE employees.name = '{name}';";
+                    Employee employee;
+
+                    using (var cmd = new NpgsqlCommand(getEmployeeByNameQuery, conn))
+                    {
+                        using (NpgsqlDataReader reader = cmd.ExecuteReader())
+                        {
+
+                            while (reader.Read())
+                            {
+                                employee = new Employee
+                                {
+                                    id = reader.GetInt32(reader.GetOrdinal("id")),
+                                    name = reader.GetString(reader.GetOrdinal("name")),
+                                    positionid = reader.GetInt32(reader.GetOrdinal("positionid")),
+                                    salary = reader.GetDecimal(reader.GetOrdinal("salary")),
+                                    email = reader.GetString(reader.GetOrdinal("email"))
+                                };
+                            }
+                        }
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("Full outer join")]
         public IActionResult FullOuterJoin()
         {
@@ -47,6 +89,7 @@ namespace SQL.Controllers
             {
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
+                List<Employee> employees = new List<Employee>();
                 using (var conn = new NpgsqlConnection(connectionString))
                 {
                     conn.Open();
