@@ -39,6 +39,40 @@ namespace SQL.Controllers
             }
         }
 
+        [HttpGet("Get average salary from Namesake")]
+        public IActionResult GetNamesakeAverageSalary()
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string getNamesakeAverageSalaryQuery = @"SELECT 
+                                                                name,
+                                                                COUNT(*) AS TotalEmployees,
+                                                                AVG(salary) AS AverageSalary
+                                                            FROM 
+                                                                Employees
+                                                            GROUP BY 
+                                                                name;";
+
+                    using (var cmd = new NpgsqlCommand(getNamesakeAverageSalaryQuery, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("Get All Employees")]
         public IActionResult GetAllEmployees()
         {

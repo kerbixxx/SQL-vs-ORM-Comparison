@@ -29,6 +29,33 @@ namespace SQL.Controllers
             }
         }
 
+        [HttpGet("Get average salary from Namesake")]
+        public IActionResult GetNamesakeAverageSalary()
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var context = new AppDbContext())
+                {
+                    var result = context.employees
+                                .GroupBy(e => e.name)
+                                .Select(g => new {
+                                    Name = g.Key,
+                                    TotalEmployees = g.Count(),
+                                    AverageSalary = g.Average(e => e.salary)
+                                })
+                                .ToList();
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("Get Employee By Id")]
         public async Task<IActionResult> GetEmployeeById(int id)
         {
@@ -36,13 +63,14 @@ namespace SQL.Controllers
             {
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
-                using(var context = new AppDbContext())
+                using (var context = new AppDbContext())
                 {
                     var employee = await context.employees.FirstOrDefaultAsync(e => e.id == id);
-                    stopwatch.Stop();
-                    return Ok(stopwatch.ElapsedMilliseconds);
                 }
-            }catch (Exception ex)
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
