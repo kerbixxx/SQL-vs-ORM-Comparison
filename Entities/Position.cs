@@ -1,8 +1,11 @@
-﻿namespace SQL.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SQL.Entities
 {
     public class Position
     {
-        public int Id;
-        public string Name;
+        [Key]
+        public int Id { get; set; }
+        public string Name {  get; set; }
     }
 }

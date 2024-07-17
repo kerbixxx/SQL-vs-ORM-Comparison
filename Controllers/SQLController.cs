@@ -13,12 +13,90 @@ namespace SQL.Controllers
         private readonly string connectionString = "Host=localhost;Port=5432;Username=postgres;Password=5051;Database=sqltesting";
         public SQLController() { }
 
-        [HttpGet]
-        public IActionResult Get()
+        [HttpGet("Get All Employees")]
+        public IActionResult GetAllEmployees()
         {
-            return Ok();
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                List<Employee> employees = new List<Employee>();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string getEmployeeTableQuery = @"
+                            SELECT * FROM Employees ORDER BY Salary ASC";
+
+                    using(var cmd = new NpgsqlCommand(getEmployeeTableQuery, conn))
+                    {
+                        using (NpgsqlDataReader reader = cmd.ExecuteReader())
+                        {
+
+                            while (reader.Read())
+                            {
+                                Employee employee = new Employee
+                                {
+                                    id = reader.GetInt32(reader.GetOrdinal("id")),
+                                    name = reader.GetString(reader.GetOrdinal("name")),
+                                    positionid = reader.GetInt32(reader.GetOrdinal("positionid")),
+                                    salary = reader.GetDecimal(reader.GetOrdinal("salary")),
+                                    email = reader.GetString(reader.GetOrdinal("email"))
+                                };
+                                employees.Add(employee);
+                            }
+                        }
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
+        [HttpGet("Get Employee By Id")]
+        public IActionResult GetEmployeeById(int id)
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                Employee employee;
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    var getEmployeeByIdQuery = $@"SELECT * FROM employees WHERE employees.id = {id};";
+                    using (var cmd = new NpgsqlCommand(getEmployeeByIdQuery, conn)) 
+                    { 
+                        using (NpgsqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                employee = new()
+                                {
+                                    id = reader.GetInt32(reader.GetOrdinal("id")),
+                                    name = reader.GetString(reader.GetOrdinal("name")),
+                                    positionid = reader.GetInt32(reader.GetOrdinal("positionid")),
+                                    salary = reader.GetDecimal(reader.GetOrdinal("salary")),
+                                    email = reader.GetString(reader.GetOrdinal("email"))
+                                };
+                            }
+                        }
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
         [HttpPost("Create Tables")]
         public IActionResult CreateTable()
         {
@@ -29,9 +107,9 @@ namespace SQL.Controllers
                     conn.Open();
 
                     string createPositionTableQuery = @"
-                        CREATE TABLE positions (
-                            position_id serial PRIMARY KEY,
-                            name VARCHAR(255) NOT NULL
+                        CREATE TABLE Positions (
+                            Id serial PRIMARY KEY,
+                            Name VARCHAR(255) NOT NULL
                         );";
 
                     using (var cmd = new NpgsqlCommand(createPositionTableQuery, conn))
@@ -40,15 +118,15 @@ namespace SQL.Controllers
                     }
 
                     string createEmployeeTableQuery = @"
-                            CREATE TABLE employees (
-                                employee_id serial PRIMARY KEY,
-                                name VARCHAR(255) NOT NULL,
-                                position_id INT,
-                                salary DECIMAL(10, 2),
-                                email VARCHAR(255),
+                            CREATE TABLE Employees (
+                                Id serial PRIMARY KEY,
+                                Name VARCHAR(255) NOT NULL,
+                                PositionId INT,
+                                Salary DECIMAL(10, 2),
+                                Email VARCHAR(255),
                                 CONSTRAINT fk_position
-                                    FOREIGN KEY(position_id)
-                                        REFERENCES positions(position_id)
+                                    FOREIGN KEY(PositionId)
+                                        REFERENCES positions(Id)
                             );";
 
                     using (var cmd = new NpgsqlCommand(createEmployeeTableQuery, conn))
@@ -78,8 +156,8 @@ namespace SQL.Controllers
                     {
                         var obj = GenerateEmployee();
 
-                        string insertEmployeeIntoTableQuery = $@"INSERT INTO employees (name,position_id,salary,email)
-                                                               VALUES ('{obj.Name}','{obj.PositionId}','{obj.Salary}','{obj.Email}');";
+                        string insertEmployeeIntoTableQuery = $@"INSERT INTO Employees (Name,PositionId,Salary,Email)
+                                                               VALUES ('{obj.name}','{obj.positionid}','{obj.salary}','{obj.email}');";
 
                         using (var cmd = new NpgsqlCommand(insertEmployeeIntoTableQuery, conn))
                         {
@@ -116,7 +194,7 @@ namespace SQL.Controllers
 
                     foreach (var obj in objList)
                     {
-                        string insertIntoPositionTableQuery = $@"INSERT INTO positions (position_id,name)
+                        string insertIntoPositionTableQuery = $@"INSERT INTO positions (Id,Name)
                                                                  VALUES ('{obj.Id}','{obj.Name}');";
 
                         using (var cmd = new NpgsqlCommand(insertIntoPositionTableQuery, conn))
@@ -163,10 +241,10 @@ namespace SQL.Controllers
         {
             Random random = new Random();
             Employee obj = new Employee();
-            obj.Name = NameFaker.MaleName();
-            obj.Email = InternetFaker.Email();
-            obj.PositionId = random.Next(1, 7);
-            obj.Salary = random.Next(1, 6) * random.Next(20000, 40000);
+            obj.name = NameFaker.MaleName();
+            obj.email = InternetFaker.Email();
+            obj.positionid = random.Next(1, 7);
+            obj.salary = random.Next(1, 6) * random.Next(20000, 40000);
             return obj;
         }
     }
