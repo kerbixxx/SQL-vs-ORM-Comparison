@@ -18,7 +18,7 @@ namespace SQL.Controllers
                 stopwatch.Start();
                 using (var context = new AppDbContext())
                 {
-                    var employees = await context.employees.OrderBy(e => e.salary).ToListAsync();
+                    var employees = await context.employees.ToListAsync();
                     stopwatch.Stop();
                     return Ok(stopwatch.ElapsedMilliseconds);
                 }

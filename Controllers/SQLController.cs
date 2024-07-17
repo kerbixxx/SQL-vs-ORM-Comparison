@@ -13,6 +13,32 @@ namespace SQL.Controllers
         private readonly string connectionString = "Host=localhost;Port=5432;Username=postgres;Password=5051;Database=sqltesting";
         public SQLController() { }
 
+        [HttpGet("Custom Query")]
+        public IActionResult CustomQuery(string query)
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string customQuery = $@"{query}";
+
+                    using (var cmd = new NpgsqlCommand(customQuery, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("Get All Employees")]
         public IActionResult GetAllEmployees()
         {
@@ -26,7 +52,7 @@ namespace SQL.Controllers
                     conn.Open();
 
                     string getEmployeeTableQuery = @"
-                            SELECT * FROM Employees ORDER BY Salary ASC";
+                            SELECT * FROM Employees";
 
                     using(var cmd = new NpgsqlCommand(getEmployeeTableQuery, conn))
                     {
