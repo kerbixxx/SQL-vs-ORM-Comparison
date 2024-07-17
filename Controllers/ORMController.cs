@@ -29,6 +29,35 @@ namespace SQL.Controllers
             }
         }
 
+        [HttpGet("Full outer join with Employees and Positions")]
+        public IActionResult FullOuterJoin()
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var context = new AppDbContext())
+                {
+                    var fullOuterJoinResult = context.employees.GroupJoin(
+                                context.positions,
+                                employee => employee.positionid,
+                                position => position.id,
+                                (employee, positions) => new { Employee = employee, Positions = positions }
+                            ).SelectMany(
+                                x => x.Positions.DefaultIfEmpty(),
+                                (x, y) => new { x.Employee, Position = y }
+                            ).ToList();
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         [HttpGet("Get average salary from Namesake")]
         public IActionResult GetNamesakeAverageSalary()
         {

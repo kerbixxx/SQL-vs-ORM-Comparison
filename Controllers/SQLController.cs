@@ -3,6 +3,7 @@ using Npgsql;
 using SQL.Entities;
 using Faker;
 using System.Diagnostics;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace SQL.Controllers
 {
@@ -34,6 +35,42 @@ namespace SQL.Controllers
                 stopwatch.Stop();
                 return Ok(stopwatch.ElapsedMilliseconds);
             }catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("Full outer join")]
+        public IActionResult FullOuterJoin()
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string joinQuery = @"SELECT 
+                                            E.id AS EmployeeID,
+                                            E.name AS EmployeeName,
+                                            P.id AS PositionID,
+                                            P.name AS PositionName
+                                        FROM 
+                                            Employees E
+                                        FULL OUTER JOIN 
+                                            Positions P ON E.positionid = P.id;
+";
+
+                    using (var cmd = new NpgsqlCommand(joinQuery, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
@@ -242,12 +279,12 @@ namespace SQL.Controllers
                 {
                     List<Position> objList = new()
                     {
-                        new Position(){Id = 1, Name = "Младший разработчик"},
-                        new Position(){Id = 2, Name = "Средний разработчик"},
-                        new Position(){Id = 3, Name = "Старший разработчик"},
-                        new Position(){Id = 4, Name = "Рекрутер"},
-                        new Position(){Id = 5, Name = "Проект Менеджер"},
-                        new Position(){Id = 6, Name = "Тестировщик"}
+                        new Position(){id = 1, name = "Младший разработчик"},
+                        new Position(){id = 2, name = "Средний разработчик"},
+                        new Position(){id = 3, name = "Старший разработчик"},
+                        new Position(){id = 4, name = "Рекрутер"},
+                        new Position(){id = 5, name = "Проект Менеджер"},
+                        new Position(){id = 6, name = "Тестировщик"}
                     };
 
                     conn.Open();
@@ -255,7 +292,7 @@ namespace SQL.Controllers
                     foreach (var obj in objList)
                     {
                         string insertIntoPositionTableQuery = $@"INSERT INTO positions (Id,Name)
-                                                                 VALUES ('{obj.Id}','{obj.Name}');";
+                                                                 VALUES ('{obj.id}','{obj.name}');";
 
                         using (var cmd = new NpgsqlCommand(insertIntoPositionTableQuery, conn))
                         {
