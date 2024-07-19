@@ -7,7 +7,7 @@ namespace SQL.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class ORMController : ControllerBase
+    public class EntityFrameworkController : ControllerBase
     {
         [HttpGet("Get All Employees")]
         public async Task<IActionResult> GetAllEmployees()
@@ -100,6 +100,26 @@ namespace SQL.Controllers
                 return Ok(stopwatch.ElapsedMilliseconds);
             }
             catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("Get Employees By Position")]
+        public async Task<IActionResult> GetEmployeesByPosition(int id)
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                using (var context = new AppDbContext())
+                {
+                    var result = await context.employees.Where(e => e.positionid == id).ToListAsync();
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

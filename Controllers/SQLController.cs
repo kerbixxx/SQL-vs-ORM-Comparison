@@ -40,6 +40,49 @@ namespace SQL.Controllers
             }
         }
 
+        [HttpGet("Get Employees By Position")]
+        public IActionResult GetEmployeesByPosition(int id)
+        {
+            try
+            {
+                Stopwatch stopwatch = new();
+                stopwatch.Start();
+                List<Employee> employees = new();
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    string getEmployeesByPositionQuery = $@"SELECT * FROM employees WHERE employees.positionid = '{id}'";
+
+                    using (var cmd = new NpgsqlCommand(getEmployeesByPositionQuery, conn))
+                    {
+                        using (NpgsqlDataReader reader = cmd.ExecuteReader())
+                        {
+
+                            while (reader.Read())
+                            {
+                                Employee employee = new Employee
+                                {
+                                    id = reader.GetInt32(reader.GetOrdinal("id")),
+                                    name = reader.GetString(reader.GetOrdinal("name")),
+                                    positionid = reader.GetInt32(reader.GetOrdinal("positionid")),
+                                    salary = reader.GetDecimal(reader.GetOrdinal("salary")),
+                                    email = reader.GetString(reader.GetOrdinal("email"))
+                                };
+                                employees.Add(employee);
+                            }
+                        }
+                    }
+                }
+                stopwatch.Stop();
+                return Ok(stopwatch.ElapsedMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("Get Employee By Name & Surname")]
         public IActionResult GetEmployeeByName(string name)
         {
